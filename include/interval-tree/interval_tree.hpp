@@ -347,7 +347,7 @@ namespace lib_interval_tree
          */
         value_type operator-(interval const& other) const
         {
-            interval_kind::distance(*this, other);
+            return interval_kind::distance(*this, other);
         }
 
         /**
