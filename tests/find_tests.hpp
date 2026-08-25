@@ -165,6 +165,71 @@ TEST_F(FindTests, CanFindAllOnConstTree)
     EXPECT_EQ(intervals[0], targetInterval);
 }
 
+TEST_F(FindTests, WillReturnEndForNextInSubtreeIfTreeIsEmpty)
+{
+    EXPECT_EQ(tree.find_next_in_subtree(tree.root(), {2, 7}), std::end(tree));
+}
+
+TEST_F(FindTests, WillFindNextExactMatchInSubtree)
+{
+    const auto targetInterval = decltype(tree)::interval_type{0, 5};
+    tree.insert(targetInterval);
+    tree.insert({10, 15});
+    tree.insert(targetInterval);
+    tree.insert({30, 35});
+
+    // The node started from is excluded, so this must find the duplicate and not the root itself.
+    const auto found = tree.find_next_in_subtree(tree.root(), targetInterval);
+    ASSERT_NE(found, std::end(tree));
+    EXPECT_EQ(*found, targetInterval);
+    EXPECT_NE(found, tree.root());
+
+    EXPECT_EQ(tree.find_next_in_subtree(tree.root(), {99, 100}), std::end(tree));
+}
+
+TEST_F(FindTests, WillFindNextExactMatchInSubtreeOnConstTree)
+{
+    const auto targetInterval = decltype(tree)::interval_type{0, 5};
+    tree.insert(targetInterval);
+    tree.insert({10, 15});
+    tree.insert(targetInterval);
+    tree.insert({30, 35});
+
+    [&targetInterval](auto const& tree) {
+        const auto found = tree.find_next_in_subtree(tree.root(), targetInterval);
+        static_assert(
+            std::is_same<decltype(found), typename std::decay_t<decltype(tree)>::const_iterator const>::value,
+            "the const overload must yield a const_iterator"
+        );
+        ASSERT_NE(found, std::end(tree));
+        EXPECT_EQ(*found, targetInterval);
+    }(tree);
+}
+
+TEST_F(FindTests, CanFindNextExactMatchInSubtreeOnConstTreeFromMutableIterator)
+{
+    const auto targetInterval = decltype(tree)::interval_type{0, 5};
+    tree.insert(targetInterval);
+    tree.insert({10, 15});
+    tree.insert(targetInterval);
+    tree.insert({30, 35});
+
+    // A mutable iterator is accepted by the const overloads without converting it by hand.
+    const auto from = tree.root();
+    const auto compare = [](auto const& lhs, auto const& rhs) {
+        return lhs == rhs;
+    };
+    [&from, &targetInterval, &compare](auto const& tree) {
+        const auto found = tree.find_next_in_subtree(from, targetInterval);
+        ASSERT_NE(found, std::end(tree));
+        EXPECT_EQ(*found, targetInterval);
+
+        const auto foundWithCompare = tree.find_next_in_subtree(from, targetInterval, compare);
+        ASSERT_NE(foundWithCompare, std::end(tree));
+        EXPECT_EQ(*foundWithCompare, targetInterval);
+    }(tree);
+}
+
 TEST_F(FindTests, FuzzyFindAllInTree)
 {
     std::mt19937 gen{0};

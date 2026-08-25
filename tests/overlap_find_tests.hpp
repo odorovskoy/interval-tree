@@ -182,6 +182,86 @@ TEST_F(OverlapFindTests, CanOverlapFindAllOnConstTree)
     EXPECT_EQ(intervals[0], targetInterval);
 }
 
+TEST_F(OverlapFindTests, WillReturnEndForNextInSubtreeIfTreeIsEmpty)
+{
+    EXPECT_EQ(tree.overlap_find_next_in_subtree(tree.root(), {2, 7}), std::end(tree));
+}
+
+TEST_F(OverlapFindTests, WillFindNextOverlapInSubtree)
+{
+    tree.insert({0, 5});
+    tree.insert({10, 15});
+    tree.insert({20, 25});
+    tree.insert({30, 35});
+
+    const auto found = tree.overlap_find_next_in_subtree(tree.root(), {21, 22});
+    ASSERT_NE(found, std::end(tree));
+    EXPECT_EQ(*found, (decltype(tree)::interval_type{20, 25}));
+}
+
+TEST_F(OverlapFindTests, WillNotFindNextOverlapInSubtreeWithTheStartNodeItself)
+{
+    tree.insert({0, 5});
+    tree.insert({10, 15});
+    tree.insert({20, 25});
+    tree.insert({30, 35});
+
+    // The node started from is excluded and all intervals are disjoint, so nothing else can overlap it.
+    const auto rootInterval = *tree.root();
+    EXPECT_EQ(tree.overlap_find_next_in_subtree(tree.root(), rootInterval), std::end(tree));
+}
+
+TEST_F(OverlapFindTests, WillObeyExclusiveWhenFindingNextOverlapInSubtree)
+{
+    tree.insert({0, 5});
+    tree.insert({10, 15});
+    tree.insert({20, 25});
+    tree.insert({30, 35});
+
+    // {25, 27} touches {20, 25} on the border only.
+    const auto inclusive = tree.overlap_find_next_in_subtree(tree.root(), {25, 27}, false);
+    ASSERT_NE(inclusive, std::end(tree));
+    EXPECT_EQ(*inclusive, (decltype(tree)::interval_type{20, 25}));
+
+    EXPECT_EQ(tree.overlap_find_next_in_subtree(tree.root(), {25, 27}, true), std::end(tree));
+}
+
+TEST_F(OverlapFindTests, WillFindNextOverlapInSubtreeOnConstTree)
+{
+    tree.insert({0, 5});
+    tree.insert({10, 15});
+    tree.insert({20, 25});
+    tree.insert({30, 35});
+
+    const auto expected = decltype(tree)::interval_type{20, 25};
+    [&expected](auto const& tree) {
+        const auto found = tree.overlap_find_next_in_subtree(tree.root(), {21, 22});
+        ASSERT_NE(found, std::end(tree));
+        EXPECT_EQ(*found, expected);
+    }(tree);
+}
+
+TEST_F(OverlapFindTests, CanConvertIteratorToConstIteratorForNextOverlapInSubtree)
+{
+    tree.insert({0, 5});
+    tree.insert({10, 15});
+    tree.insert({20, 25});
+    tree.insert({30, 35});
+
+    // The conversion itself is explicit, but the const overloads also accept a mutable iterator directly.
+    const auto converted = decltype(tree)::const_iterator{tree.root()};
+    const auto mutableIterator = tree.root();
+    const auto expected = decltype(tree)::interval_type{20, 25};
+    [&converted, &mutableIterator, &expected](auto const& tree) {
+        const auto found = tree.overlap_find_next_in_subtree(converted, {21, 22});
+        ASSERT_NE(found, std::end(tree));
+        EXPECT_EQ(*found, expected);
+
+        const auto fromMutable = tree.overlap_find_next_in_subtree(mutableIterator, {21, 22});
+        EXPECT_EQ(fromMutable, found);
+    }(tree);
+}
+
 TEST_F(OverlapFindTests, FuzzyOverlapFindAllInTree)
 {
     std::mt19937 gen{0};
