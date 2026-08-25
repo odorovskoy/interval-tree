@@ -549,6 +549,27 @@ TEST_F(DistanceTests, DistanceAdjacent2)
     EXPECT_EQ(base5 - other5, 0);
 }
 
+TEST_F(DistanceTests, DynamicDistance)
+{
+    constexpr auto c = interval_border::closed;
+    constexpr auto ca = interval_border::closed_adjacent;
+
+    // Regression: interval<T, dynamic>::operator- used to drop its return statement.
+    EXPECT_EQ(i<dynamic>(1, 5, c, c) - i<dynamic>(7, 9, c, c), 2);
+
+    // right side:
+    EXPECT_EQ(i<dynamic>(5, 10, c, c) - i<dynamic>(15, 18, c, c), 5);
+
+    // left side:
+    EXPECT_EQ(i<dynamic>(5, 10, c, c) - i<dynamic>(0, 1, c, c), 4);
+
+    // overlapping and adjacent intervals have no distance:
+    EXPECT_EQ(i<dynamic>(-35, 96, c, c) - i<dynamic>(-20, 600, c, c), 0);
+    EXPECT_EQ(i<dynamic>(5, 10, c, c) - i<dynamic>(10, 18, c, c), 0);
+    EXPECT_EQ(i<dynamic>(5, 10, c, c) - i<dynamic>(0, 5, c, c), 0);
+    EXPECT_EQ(i<dynamic>(0, 5, c, ca) - i<dynamic>(6, 10, ca, c), 0);
+}
+
 TEST_F(OverlapTests, DynamicOverlapContainedCompletely)
 {
     auto containment = i<dynamic>(-100, 100, interval_border::closed, interval_border::closed);
