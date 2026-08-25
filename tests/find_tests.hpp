@@ -206,6 +206,30 @@ TEST_F(FindTests, WillFindNextExactMatchInSubtreeOnConstTree)
     }(tree);
 }
 
+TEST_F(FindTests, CanFindNextExactMatchInSubtreeOnConstTreeFromMutableIterator)
+{
+    const auto targetInterval = decltype(tree)::interval_type{0, 5};
+    tree.insert(targetInterval);
+    tree.insert({10, 15});
+    tree.insert(targetInterval);
+    tree.insert({30, 35});
+
+    // A mutable iterator is accepted by the const overloads without converting it by hand.
+    const auto from = tree.root();
+    const auto compare = [](auto const& lhs, auto const& rhs) {
+        return lhs == rhs;
+    };
+    [&from, &targetInterval, &compare](auto const& tree) {
+        const auto found = tree.find_next_in_subtree(from, targetInterval);
+        ASSERT_NE(found, std::end(tree));
+        EXPECT_EQ(*found, targetInterval);
+
+        const auto foundWithCompare = tree.find_next_in_subtree(from, targetInterval, compare);
+        ASSERT_NE(foundWithCompare, std::end(tree));
+        EXPECT_EQ(*foundWithCompare, targetInterval);
+    }(tree);
+}
+
 TEST_F(FindTests, FuzzyFindAllInTree)
 {
     std::mt19937 gen{0};

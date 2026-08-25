@@ -248,13 +248,17 @@ TEST_F(OverlapFindTests, CanConvertIteratorToConstIteratorForNextOverlapInSubtre
     tree.insert({20, 25});
     tree.insert({30, 35});
 
-    // A mutable iterator has to be converted explicitly to reach the const overload.
-    const auto from = decltype(tree)::const_iterator{tree.root()};
+    // The conversion itself is explicit, but the const overloads also accept a mutable iterator directly.
+    const auto converted = decltype(tree)::const_iterator{tree.root()};
+    const auto mutableIterator = tree.root();
     const auto expected = decltype(tree)::interval_type{20, 25};
-    [&from, &expected](auto const& tree) {
-        const auto found = tree.overlap_find_next_in_subtree(from, {21, 22});
+    [&converted, &mutableIterator, &expected](auto const& tree) {
+        const auto found = tree.overlap_find_next_in_subtree(converted, {21, 22});
         ASSERT_NE(found, std::end(tree));
         EXPECT_EQ(*found, expected);
+
+        const auto fromMutable = tree.overlap_find_next_in_subtree(mutableIterator, {21, 22});
+        EXPECT_EQ(fromMutable, found);
     }(tree);
 }
 

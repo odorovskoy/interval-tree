@@ -1367,6 +1367,13 @@ namespace lib_interval_tree
                 return end();
             return const_iterator{find_i_ex(from.node_, ival, compare), this};
         }
+        // Convenience, so that a mutable iterator does not have to be converted by hand.
+        template <typename CompareFunctionT>
+        const_iterator
+        find_next_in_subtree(iterator from, interval_type const& ival, CompareFunctionT const& compare) const
+        {
+            return find_next_in_subtree(const_iterator{from}, ival, compare);
+        }
 
         /**
          *  Finds the next exact match EXCLUDING from.
@@ -1386,6 +1393,11 @@ namespace lib_interval_tree
             return find_next_in_subtree(from, ival, [](auto const& lhs, auto const& rhs) {
                 return lhs == rhs;
             });
+        }
+        // Convenience, so that a mutable iterator does not have to be converted by hand.
+        const_iterator find_next_in_subtree(iterator from, interval_type const& ival) const
+        {
+            return find_next_in_subtree(const_iterator{from}, ival);
         }
 
         /**
@@ -1465,6 +1477,12 @@ namespace lib_interval_tree
                 return const_iterator{overlap_find_i_ex<true>(from.node_, ival), this};
             else
                 return const_iterator{overlap_find_i_ex<false>(from.node_, ival), this};
+        }
+        // Convenience, so that a mutable iterator does not have to be converted by hand.
+        const_iterator
+        overlap_find_next_in_subtree(iterator from, interval_type const& ival, bool exclusive = false) const
+        {
+            return overlap_find_next_in_subtree(const_iterator{from}, ival, exclusive);
         }
 
         /**
