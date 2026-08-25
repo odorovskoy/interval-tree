@@ -707,6 +707,10 @@ namespace lib_interval_tree
         const_interval_tree_iterator& operator=(const_interval_tree_iterator const&) = default;
         const_interval_tree_iterator& operator=(const_interval_tree_iterator&&) noexcept = default;
 
+        explicit const_interval_tree_iterator(interval_tree_iterator<node_type, reverse, tree_hooks> const& other)
+            : iterator_base{other.node_, other.owner_}
+        {}
+
         template <typename T>
         friend void increment(T& iter);
         template <typename T>
@@ -1357,11 +1361,11 @@ namespace lib_interval_tree
         }
         template <typename CompareFunctionT>
         const_iterator
-        find_next_in_subtree(iterator from, interval_type const& ival, CompareFunctionT const& compare) const
+        find_next_in_subtree(const_iterator from, interval_type const& ival, CompareFunctionT const& compare) const
         {
             if (root_ == nullptr)
                 return end();
-            return iterator{find_i_ex(from.node_, ival, compare), this};
+            return const_iterator{find_i_ex(from.node_, ival, compare), this};
         }
 
         /**
@@ -1377,7 +1381,7 @@ namespace lib_interval_tree
                 return lhs == rhs;
             });
         }
-        const_iterator find_next_in_subtree(iterator from, interval_type const& ival) const
+        const_iterator find_next_in_subtree(const_iterator from, interval_type const& ival) const
         {
             return find_next_in_subtree(from, ival, [](auto const& lhs, auto const& rhs) {
                 return lhs == rhs;
@@ -1447,14 +1451,20 @@ namespace lib_interval_tree
         {
             if (root_ == nullptr)
                 return end();
-            return iterator{overlap_find_i_ex(from.node_, ival, exclusive), this};
+            if (exclusive)
+                return iterator{overlap_find_i_ex<true>(from.node_, ival), this};
+            else
+                return iterator{overlap_find_i_ex<false>(from.node_, ival), this};
         }
         const_iterator
         overlap_find_next_in_subtree(const_iterator from, interval_type const& ival, bool exclusive = false) const
         {
             if (root_ == nullptr)
                 return end();
-            return const_iterator{overlap_find_i_ex(from.node_, ival, exclusive), this};
+            if (exclusive)
+                return const_iterator{overlap_find_i_ex<true>(from.node_, ival), this};
+            else
+                return const_iterator{overlap_find_i_ex<false>(from.node_, ival), this};
         }
 
         /**
@@ -1793,9 +1803,10 @@ namespace lib_interval_tree
                 return find_i_ex(ptr, ival, compare);
         }
 
-        // excludes ptr
+        // excludes ptr, which is therefore never dereferenced for anything but its child pointers.
         template <typename ComparatorFunctionT>
-        node_type* find_i_ex(node_type* ptr, interval_type const& ival, ComparatorFunctionT const& compare) const
+        node_type*
+        find_i_ex(node_type const* ptr, interval_type const& ival, ComparatorFunctionT const& compare) const
         {
             if (ptr->left_ && ival.high() <= ptr->left_->max())
             {
@@ -1877,9 +1888,9 @@ namespace lib_interval_tree
             return true;
         }
 
-        // excludes ptr
+        // excludes ptr, which is therefore never dereferenced for anything but its child pointers.
         template <bool Exclusive>
-        node_type* overlap_find_i_ex(node_type* ptr, interval_type const& ival) const
+        node_type* overlap_find_i_ex(node_type const* ptr, interval_type const& ival) const
         {
             if (ptr->left_ && ptr->left_->max() >= ival.low())
             {
