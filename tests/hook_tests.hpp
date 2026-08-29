@@ -129,18 +129,12 @@ TEST_F(HookTests, OnBeforeEraseFixupIsCalled)
         called = true;
     };
 
-    tree.insert({16, 21});
-    tree.insert({8, 9});
-    tree.insert({25, 30});
-    tree.insert({5, 8});
-    tree.insert({15, 23});
-    tree.insert({17, 19});
-    tree.insert({26, 26});
-    tree.insert({0, 3});
-    tree.insert({6, 10});
-    tree.insert({19, 20});
+    tree.insert({0, 1});
+    tree.insert({1, 2});
+    tree.insert({2, 3});
+    tree.insert({3, 4});
 
-    tree.erase(tree.find({17, 19}));
+    tree.erase(tree.find({0, 1}));
 
     EXPECT_TRUE(called);
 }
@@ -153,18 +147,12 @@ TEST_F(HookTests, OnAfterEraseFixupIsCalled)
         called = true;
     };
 
-    tree.insert({16, 21});
-    tree.insert({8, 9});
-    tree.insert({25, 30});
-    tree.insert({5, 8});
-    tree.insert({15, 23});
-    tree.insert({17, 19});
-    tree.insert({26, 26});
-    tree.insert({0, 3});
-    tree.insert({6, 10});
-    tree.insert({19, 20});
+    tree.insert({0, 1});
+    tree.insert({1, 2});
+    tree.insert({2, 3});
+    tree.insert({3, 4});
 
-    tree.erase(tree.find({17, 19}));
+    tree.erase(tree.find({0, 1}));
 
     EXPECT_TRUE(called);
 }
