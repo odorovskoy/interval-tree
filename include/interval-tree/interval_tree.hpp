@@ -1180,10 +1180,11 @@ namespace lib_interval_tree
                 x->parent_ = y->parent_;
 
             auto* x_parent = y->parent_;
+            const bool y_was_left = y->parent_ && y->is_left();
 
             if (!y->parent_)
                 root_ = x;
-            else if (y->is_left())
+            else if (y_was_left)
                 y->parent_->left_ = x;
             else
                 y->parent_->right_ = x;
@@ -1195,12 +1196,12 @@ namespace lib_interval_tree
                 recalculate_max(iter.node_);
             }
 
-            if (x && x->color_ == rb_color::red)
+            if (y->color_ == rb_color::black)
             {
-                if (x_parent)
-                    erase_fixup(x, x_parent, y->is_left());
-                else
+                if (x && x->color_ == rb_color::red)
                     x->color_ = rb_color::black;
+                else if (x_parent)
+                    erase_fixup(x, x_parent, y_was_left);
             }
 
             delete y;
@@ -2094,7 +2095,7 @@ namespace lib_interval_tree
         {
             tree_hooks::template on_before_erase_fixup<this_type>(*this, x, x_parent, y_is_left);
 
-            while (x != root_ && x->color_ == rb_color::black)
+            while (x != root_ && (!x || x->color_ == rb_color::black))
             {
                 node_type* w;
                 if (y_is_left)
@@ -2108,16 +2109,17 @@ namespace lib_interval_tree
                         w = x_parent->right_;
                     }
 
-                    if (w->left_->color_ == rb_color::black && w->right_->color_ == rb_color::black)
+                    if ((!w->left_ || w->left_->color_ == rb_color::black) &&
+                        (!w->right_ || w->right_->color_ == rb_color::black))
                     {
                         w->color_ = rb_color::red;
                         x = x_parent;
                         x_parent = x->parent_;
-                        y_is_left = (x == x_parent->left_);
+                        y_is_left = x_parent && (x == x_parent->left_);
                     }
                     else
                     {
-                        if (w->right_->color_ == rb_color::black)
+                        if (!w->right_ || w->right_->color_ == rb_color::black)
                         {
                             w->left_->color_ = rb_color::black;
                             w->color_ = rb_color::red;
@@ -2146,16 +2148,17 @@ namespace lib_interval_tree
                         w = x_parent->left_;
                     }
 
-                    if (w->right_->color_ == rb_color::black && w->left_->color_ == rb_color::black)
+                    if ((!w->right_ || w->right_->color_ == rb_color::black) &&
+                        (!w->left_ || w->left_->color_ == rb_color::black))
                     {
                         w->color_ = rb_color::red;
                         x = x_parent;
                         x_parent = x->parent_;
-                        y_is_left = (x == x_parent->left_);
+                        y_is_left = x_parent && (x == x_parent->left_);
                     }
                     else
                     {
-                        if (w->left_->color_ == rb_color::black)
+                        if (!w->left_ || w->left_->color_ == rb_color::black)
                         {
                             w->right_->color_ = rb_color::black;
                             w->color_ = rb_color::red;
