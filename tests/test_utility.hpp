@@ -61,6 +61,17 @@ void testRedBlackPropertyViolation(TreeT const& tree)
         return leaves;
     };
 
+    // Test that all paths from a node down to its null descendants contain the same number of black nodes.
+    std::function<int(typename TreeT::const_iterator)> blackHeight = [&](typename TreeT::const_iterator node) -> int {
+        if (node == std::cend(tree))
+            return 1;
+        const auto leftHeight = blackHeight(node.left());
+        const auto rightHeight = blackHeight(node.right());
+        EXPECT_EQ(leftHeight, rightHeight);
+        return leftHeight + (node.color() == rb_color::black ? 1 : 0);
+    };
+    blackHeight(tree.root());
+
     // Test that for every node, on the path to its leaves, has the same number of black nodes.
     for (auto i = std::cbegin(tree); i != std::cend(tree); ++i)
     {

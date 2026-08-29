@@ -182,6 +182,58 @@ TEST_F(EraseTests, RandomEraseTest)
     EXPECT_EQ(oracle.livingInstances, amount - deleteAmount);
     testMaxProperty(oracleTree);
     testTreeHeightHealth(oracleTree);
+    testRedBlackPropertyViolation(oracleTree);
+}
+
+TEST_F(EraseTests, EraseOfBlackLeafPreservesRedBlackProperties)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({0, 1});
+    tree.insert({1, 2});
+    tree.insert({2, 3});
+    tree.insert({3, 4});
+
+    tree.erase(tree.find({0, 1}));
+
+    testRedBlackPropertyViolation(tree);
+}
+
+TEST_F(EraseTests, FromIssue66Test)
+{
+    lib_interval_tree::interval_tree_t<int> tree;
+    tree.insert({-2, 0});
+    tree.insert({-4, -3});
+    tree.insert({-4, 4});
+    tree.insert({1, 5});
+    tree.insert({-2, 1});
+    tree.insert({-4, -4});
+
+    tree.erase(tree.find({-4, 4}));
+
+    testRedBlackPropertyViolation(tree);
+}
+
+TEST_F(EraseTests, SequentialEraseKeepsRedBlackProperties)
+{
+    constexpr int amount = 256;
+
+    lib_interval_tree::interval_tree_t<int> tree;
+    for (int i = 0; i != amount; ++i)
+        tree.insert({i, i + 1});
+
+    for (int i = 0; i != amount; ++i)
+    {
+        std::uniform_int_distribution<int> dist{0, amount - i - 1};
+        auto iter = tree.begin();
+        const auto advanceBy = dist(gen);
+        for (int j = 0; j != advanceBy; ++j)
+            ++iter;
+        tree.erase(iter);
+        if (!tree.empty())
+            testRedBlackPropertyViolation(tree);
+    }
+
+    EXPECT_TRUE(tree.empty());
 }
 
 TEST_F(EraseTests, MassiveDeleteEntireTreeWithEraseReturnIterator)
