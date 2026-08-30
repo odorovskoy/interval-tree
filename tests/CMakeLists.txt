@@ -45,6 +45,7 @@ target_compile_options(tree-tests PUBLIC "$<$<CONFIG:RELEASE>:${RELEASE_OPTIONS}
 
 if (INT_TREE_DRAW_EXAMPLES)
     target_link_libraries(tree-tests PRIVATE cairo-wrap cairo)
+    target_compile_definitions(tree-tests PRIVATE INT_TREE_DRAW_EXAMPLES)
 endif()
 
 # If msys2, copy dynamic libraries to executable directory, visual studio does this automatically.
